@@ -178,3 +178,36 @@ msgstr "Taschennummern verwalten"
 
 msgid "Start"
 msgstr "Start"
+
+# views.py – new feature strings
+msgid "No number range configured for this product."
+msgstr "Für dieses Produkt ist kein Nummernkreis konfiguriert."
+
+msgid "The number range is full. Not all positions could be assigned a number."
+msgstr "Der Nummernkreis ist voll. Nicht alle Positionen konnten eine Nummer erhalten."
+
+msgid "No orders found that still need a number."
+msgstr "Keine Bestellungen gefunden, die noch eine Nummer benötigen."
+
+# templates/range_delete_confirm.html
+msgid "Delete Number Range"
+msgstr "Nummernkreis löschen"
+
+msgid "Warning: this action cannot be undone."
+msgstr "Warnung: Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "The number range \"%(name)s\" still has %(count)s assigned bag numbers. All of them will be permanently released and deleted."
+msgstr "Der Nummernkreis „%(name)s" hat noch %(count)s vergebene Taschennummern. Diese werden dauerhaft freigegeben und gelöscht."
+
+msgid "The following product assignments will also be removed:"
+msgstr "Folgende Produktzuordnungen werden ebenfalls entfernt:"
+
+msgid "Yes, delete permanently"
+msgstr "Ja, dauerhaft löschen"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+# templates/overview.html – new button
+msgid "Assign missing numbers"
+msgstr "Fehlende Nummern vergeben"

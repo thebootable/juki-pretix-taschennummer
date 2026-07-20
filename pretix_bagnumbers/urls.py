@@ -24,8 +24,18 @@ urlpatterns = [
         name="range.delete",
     ),
     path(
+        "control/event/<str:organizer>/<str:event>/bagnumbers/range/<int:pk>/delete/confirm/",
+        views.RangeDeleteConfirmView.as_view(),
+        name="range.delete.confirm",
+    ),
+    path(
         "control/event/<str:organizer>/<str:event>/bagnumbers/number/<int:pk>/",
         views.NumberChangeView.as_view(),
         name="number.edit",
+    ),
+    path(
+        "control/event/<str:organizer>/<str:event>/bagnumbers/product/<int:item_pk>/assign/",
+        views.BulkAssignView.as_view(),
+        name="product.assign_bulk",
     ),
 ]

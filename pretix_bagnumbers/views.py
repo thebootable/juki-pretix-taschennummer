@@ -1,17 +1,19 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
-from django.db.models.deletion import ProtectedError
 from django.views import View
 from django.views.generic import FormView, TemplateView
 
+from pretix.base.models import Item, Order, OrderPosition
 from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.control.views.event import EventSettingsViewMixin
 
 from .forms import NumberRangeForm, BagNumberChangeForm
 from .models import ItemNumberConfig, NumberRange, BagNumber
+from .services import assign_number, release_number
 
 
 class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, TemplateView):
@@ -70,28 +72,86 @@ class RangeDeleteView(EventPermissionRequiredMixin, View):
     permission = "can_change_event_settings"
 
     def post(self, request, *args, **kwargs):
-        rng = get_object_or_404(
-            NumberRange, pk=kwargs["pk"], event=request.event
-        )
-        if rng.numbers.exists():
-            messages.error(request, _(
-                "The number range '%(name)s' cannot be deleted while numbers from it are still assigned."
-            ) % {"name": rng.name})
-        else:
-            try:
-                rng.delete()
-                messages.success(request, _("Number range deleted."))
-            except ProtectedError:
-                messages.error(request, _(
-                    "The number range could not be deleted because numbers from it were assigned in the meantime."
-                ))
-        return redirect(reverse(
+        rng = get_object_or_404(NumberRange, pk=kwargs["pk"], event=request.event)
+        overview_url = reverse(
             "plugins:pretix_bagnumbers:overview",
-            kwargs={
-                "organizer": request.organizer.slug,
-                "event": request.event.slug,
-            },
-        ))
+            kwargs={"organizer": request.organizer.slug, "event": request.event.slug},
+        )
+
+        if rng.numbers.exists() and request.POST.get("force") != "1":
+            return redirect(reverse(
+                "plugins:pretix_bagnumbers:range.delete.confirm",
+                kwargs={"organizer": request.organizer.slug, "event": request.event.slug, "pk": rng.pk},
+            ))
+
+        # Release all bag numbers with proper logging before deleting the range
+        for bn in BagNumber.objects.filter(number_range=rng).select_related("position"):
+            release_number(bn.position)
+
+        rng.delete()  # cascades to ItemNumberConfig
+        messages.success(request, _("Number range deleted."))
+        return redirect(overview_url)
+
+
+class RangeDeleteConfirmView(EventPermissionRequiredMixin, TemplateView):
+    template_name = "pretix_bagnumbers/range_delete_confirm.html"
+    permission = "can_change_event_settings"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        rng = get_object_or_404(NumberRange, pk=self.kwargs["pk"], event=self.request.event)
+        ctx["range"] = rng
+        ctx["number_count"] = rng.numbers.count()
+        ctx["affected_configs"] = ItemNumberConfig.objects.filter(
+            number_range=rng
+        ).select_related("item")
+        return ctx
+
+
+class BulkAssignView(EventPermissionRequiredMixin, View):
+    permission = "can_change_orders"
+
+    def post(self, request, *args, **kwargs):
+        item = get_object_or_404(Item, pk=kwargs["item_pk"], event=request.event)
+        overview_url = reverse(
+            "plugins:pretix_bagnumbers:overview",
+            kwargs={"organizer": request.organizer.slug, "event": request.event.slug},
+        )
+
+        try:
+            item.bagnumber_config
+        except ItemNumberConfig.DoesNotExist:
+            messages.error(request, _("No number range configured for this product."))
+            return redirect(overview_url)
+
+        positions = OrderPosition.objects.filter(
+            order__event=request.event,
+            order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+            item=item,
+            canceled=False,
+            bagnumber__isnull=True,
+        )
+
+        assigned = 0
+        range_full = False
+        for pos in positions:
+            try:
+                if assign_number(pos):
+                    assigned += 1
+            except ValidationError:
+                range_full = True
+                break
+
+        if assigned:
+            messages.success(request, _("%(count)s numbers assigned.") % {"count": assigned})
+        if range_full:
+            messages.warning(request, _(
+                "The number range is full. Not all positions could be assigned a number."
+            ))
+        if not assigned and not range_full:
+            messages.info(request, _("No orders found that still need a number."))
+
+        return redirect(overview_url)
 
 
 class NumberChangeView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):

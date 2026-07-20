@@ -1,0 +1,28 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Delete Number Range" %}{% endblock %}
+{% block inside %}
+  <h1>{% trans "Delete Number Range" %}</h1>
+
+  <div class="alert alert-danger">
+    <strong>{% trans "Warning: this action cannot be undone." %}</strong>
+    <p>{% blocktrans with name=range.name count=number_count %}The number range "{{ name }}" still has {{ count }} assigned bag numbers. All of them will be permanently released and deleted.{% endblocktrans %}</p>
+    {% if affected_configs %}
+      <p>{% trans "The following product assignments will also be removed:" %}</p>
+      <ul>
+        {% for cfg in affected_configs %}
+          <li>{{ cfg.item }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <form method="post"
+        action="{% url 'plugins:pretix_bagnumbers:range.delete' organizer=request.organizer.slug event=request.event.slug pk=range.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="force" value="1">
+    <button type="submit" class="btn btn-danger">{% trans "Yes, delete permanently" %}</button>
+    <a href="{% url 'plugins:pretix_bagnumbers:overview' organizer=request.organizer.slug event=request.event.slug %}"
+       class="btn btn-default">{% trans "Cancel" %}</a>
+  </form>
+{% endblock %}

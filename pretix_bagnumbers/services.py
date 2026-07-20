@@ -40,8 +40,8 @@ def assign_number(position):
             n += 1
         if rng.end is not None and n > rng.end:
             raise ValidationError(
-                f"Nummernkreis '{rng.name}' ist voll "
-                f"({rng.start}-{rng.end})."
+                f"Number range '{rng.name}' is full "
+                f"({rng.start}–{rng.end})."
             )
         tn = BagNumber.objects.create(
             event=event, position=position, number_range=rng, number=n,

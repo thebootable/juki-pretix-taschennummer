@@ -22,11 +22,11 @@
               <form method="post" style="display: inline"
                     action="{% url 'plugins:pretix_bagnumbers:range.delete' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">
-                  {% trans "Delete" %}
-                </button>
+                <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
               </form>
             {% else %}
+              <a href="{% url 'plugins:pretix_bagnumbers:range.delete.confirm' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}"
+                 class="btn btn-danger btn-sm">{% trans "Delete" %}</a>
               <span class="text-muted small">
                 {% blocktrans with count=r.numbers_count %}{{ count }} numbers assigned{% endblocktrans %}
               </span>
@@ -44,7 +44,7 @@
   <h2>{% trans "Configured Products" %}</h2>
   <table class="table">
     <thead>
-      <tr><th>{% trans "Product" %}</th><th>{% trans "Number Range" %}</th></tr>
+      <tr><th>{% trans "Product" %}</th><th>{% trans "Number Range" %}</th><th></th></tr>
     </thead>
     <tbody>
       {% for c in configs %}
@@ -55,9 +55,16 @@
             </a>
           </td>
           <td>{{ c.number_range.name }} ({% trans "from" %} {{ c.number_range.start }})</td>
+          <td>
+            <form method="post" style="display: inline"
+                  action="{% url 'plugins:pretix_bagnumbers:product.assign_bulk' organizer=request.organizer.slug event=request.event.slug item_pk=c.item.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-default btn-sm">{% trans "Assign missing numbers" %}</button>
+            </form>
+          </td>
         </tr>
       {% empty %}
-        <tr><td colspan="2"><em>{% trans "No products assigned. Assign via the product detail page." %}</em></td></tr>
+        <tr><td colspan="3"><em>{% trans "No products assigned. Assign via the product detail page." %}</em></td></tr>
       {% endfor %}
     </tbody>
   </table>
