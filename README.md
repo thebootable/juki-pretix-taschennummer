@@ -3,7 +3,10 @@
 Fortlaufende **Taschennummern** mit konfigurierbaren Nummernkreisen pro Produkt,
 damit die nummerierten Taschen vor Ort sauber vergeben werden können.
 
+[![License](https://img.shields.io/github/license/thebootable/juki-pretix-taschennummer)](LICENSE)
+
 ## Funktionsweise
+
 - **Nummernkreise** (Name, Start, optional Ende) werden pro Event angelegt.
   Überlappende Kreise werden beim Speichern abgelehnt.
 - **Zuordnung am Produkt**: Über das `item_forms`-Signal erscheint auf jeder
@@ -55,6 +58,7 @@ pytest tests/
 ```
 
 ## Entschiedene Punkte
+
 - **API-Performance**: 1 Query pro Position im `orderposition_api_details`-Receiver
   ist für die erwartete Eventgröße akzeptabel -- bewusst so belassen.
 - **Logging**: Vergabe, Freigabe und manuelle Änderung erzeugen LogEntries
