@@ -16,7 +16,7 @@ def test_number_range_form_gueltig(event):
 def test_number_range_form_ende_kleiner_start(event):
     form = NumberRangeForm(data={"name": "Kinder", "start": 200, "end": 100}, event=event)
     assert not form.is_valid()
-    assert any("Ende" in str(e) for e in form.non_field_errors())
+    assert any("start" in str(e).lower() for e in form.non_field_errors())
 
 
 @pytest.mark.django_db
@@ -24,7 +24,7 @@ def test_number_range_form_ueberlappung_wird_abgelehnt(event):
     NumberRange.objects.create(event=event, name="Bestehend", start=100, end=200)
     form = NumberRangeForm(data={"name": "Neu", "start": 150, "end": 250}, event=event)
     assert not form.is_valid()
-    assert any("überschneidet" in str(e) for e in form.non_field_errors())
+    assert any("overlaps" in str(e) for e in form.non_field_errors())
 
 
 @pytest.mark.django_db
@@ -73,4 +73,4 @@ def test_bagnumber_change_form_duplikat_abgelehnt(event, bagnumber):
 
     form = BagNumberChangeForm(data={"number": 99}, instance=bagnumber)
     assert not form.is_valid()
-    assert "bereits vergeben" in str(form.errors)
+    assert "already assigned" in str(form.errors)

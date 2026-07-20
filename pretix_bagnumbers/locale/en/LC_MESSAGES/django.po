@@ -1,0 +1,8 @@
+# English (source language) for pretix-bagnumbers
+# msgstrs are empty — English msgids serve as the fallback.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"

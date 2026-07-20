@@ -1,4 +1,5 @@
 from django.dispatch import receiver
+from django.template.loader import get_template
 from django.urls import resolve, reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -14,7 +15,7 @@ from pretix.base.signals import (
     order_split,
     register_data_exporters,
 )
-from pretix.control.signals import item_forms, nav_event_settings
+from pretix.control.signals import item_forms, nav_event_settings, order_info
 
 from .forms import ItemNumberConfigForm
 from .models import ItemNumberConfig, BagNumber
@@ -98,7 +99,7 @@ def add_item_form(sender, request, item, **kwargs):
 def add_nav_entry(sender, request, **kwargs):
     url = resolve(request.path_info)
     return [{
-        "label": _("Taschennummern"),
+        "label": _("Bag Numbers"),
         "url": reverse(
             "plugins:pretix_bagnumbers:overview",
             kwargs={
@@ -122,7 +123,7 @@ def add_layout_variable(sender, **kwargs):
 
     return {
         "bagnumber": {
-            "label": _("Taschennummer"),
+            "label": _("Bag number"),
             "editor_sample": "123",
             "evaluate": evaluate,
         }
@@ -142,10 +143,35 @@ def api_details(sender, orderposition, **kwargs):
 
 # ------------------------------------------------------------ Export
 
-@receiver(register_data_exporters, dispatch_uid=f"{DUID}_exporter")
-def register_exporter(sender, **kwargs):
-    from .exporters import BagNumberExporter
-    return BagNumberExporter
+@receiver(register_data_exporters, dispatch_uid=f"{DUID}_teilnehmerdaten_exporter")
+def register_teilnehmerdaten_exporter(sender, **kwargs):
+    from .exporters import TeilnehmerdatenExporter
+    return TeilnehmerdatenExporter
+
+
+# ------------------------------------------------------- Order-Detailseite
+
+@receiver(order_info, dispatch_uid=f"{DUID}_order_info")
+def show_order_bag_numbers(sender, order, request, **kwargs):
+    numbers = BagNumber.objects.filter(
+        event=sender,
+        position__order=order,
+    ).select_related("position__item", "number_range")
+    if not numbers.exists():
+        return ""
+    settings_url = reverse(
+        "plugins:pretix_bagnumbers:overview",
+        kwargs={
+            "organizer": request.organizer.slug,
+            "event": request.event.slug,
+        },
+    )
+    template = get_template("pretix_bagnumbers/order_info.html")
+    return template.render({
+        "bag_numbers": numbers,
+        "settings_url": settings_url,
+        "request": request,
+    }, request=request)
 
 
 # ----------------------------------------------------- Event-Klonen

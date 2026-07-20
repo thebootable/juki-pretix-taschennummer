@@ -8,7 +8,7 @@ dependencies = []
 pretix_bagnumbers = "pretix_bagnumbers:PretixPluginMeta"
 
 [tool.setuptools.package-data]
-pretix_bagnumbers = ["templates/**/*.html", "migrations/*.py"]
+pretix_bagnumbers = ["templates/**/*.html", "migrations/*.py", "locale/**/*"]
 
 [build-system]
 requires = ["setuptools"]

@@ -15,12 +15,6 @@ from .models import ItemNumberConfig, NumberRange, BagNumber
 
 
 class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, TemplateView):
-    """
-    Zentrale Seite unter Einstellungen → Taschennummern:
-    - alle Nummernkreise (anlegen/bearbeiten/löschen)
-    - alle konfigurierten Produkte mit Sprunglink zur Produktseite
-    - Liste der vergebenen Nummern mit Änderungsmöglichkeit
-    """
     template_name = "pretix_bagnumbers/overview.html"
     permission = "can_change_event_settings"
 
@@ -38,9 +32,6 @@ class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
         ).select_related(
             "position__order", "position__item", "number_range"
         )
-        # Sprunglink zurück zum Produkt:
-        # reverse("control:event.item", kwargs={organizer, event, item=pk})
-        # -> im Template verwendet
         return ctx
 
 
@@ -62,7 +53,7 @@ class RangeCreateUpdateView(EventSettingsViewMixin, EventPermissionRequiredMixin
     def form_valid(self, form):
         form.instance.event = self.request.event
         form.save()
-        messages.success(self.request, _("Nummernkreis gespeichert."))
+        messages.success(self.request, _("Number range saved."))
         return redirect(self._overview_url())
 
     def _overview_url(self):
@@ -76,11 +67,6 @@ class RangeCreateUpdateView(EventSettingsViewMixin, EventPermissionRequiredMixin
 
 
 class RangeDeleteView(EventPermissionRequiredMixin, View):
-    """
-    Löscht einen Nummernkreis -- nur wenn keine Nummern vergeben sind.
-    Der Button wird im Template nur bei leeren Kreisen angezeigt;
-    diese View ist das serverseitige Sicherheitsnetz dazu.
-    """
     permission = "can_change_event_settings"
 
     def post(self, request, *args, **kwargs):
@@ -89,19 +75,15 @@ class RangeDeleteView(EventPermissionRequiredMixin, View):
         )
         if rng.numbers.exists():
             messages.error(request, _(
-                "Der Nummernkreis '%(name)s' kann nicht gelöscht werden, "
-                "solange Nummern daraus vergeben sind."
+                "The number range '%(name)s' cannot be deleted while numbers from it are still assigned."
             ) % {"name": rng.name})
         else:
             try:
                 rng.delete()
-                messages.success(request, _("Nummernkreis gelöscht."))
+                messages.success(request, _("Number range deleted."))
             except ProtectedError:
-                # Race: zwischen Prüfung und Löschen wurde eine Nummer
-                # vergeben. PROTECT im Model fängt das hart ab.
                 messages.error(request, _(
-                    "Der Nummernkreis konnte nicht gelöscht werden, da "
-                    "inzwischen Nummern daraus vergeben wurden."
+                    "The number range could not be deleted because numbers from it were assigned in the meantime."
                 ))
         return redirect(reverse(
             "plugins:pretix_bagnumbers:overview",
@@ -113,7 +95,6 @@ class RangeDeleteView(EventPermissionRequiredMixin, View):
 
 
 class NumberChangeView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):
-    """Manuelle Änderung einer einzelnen Nummer."""
     template_name = "pretix_bagnumbers/number_form.html"
     permission = "can_change_orders"
     form_class = BagNumberChangeForm
@@ -137,7 +118,7 @@ class NumberChangeView(EventSettingsViewMixin, EventPermissionRequiredMixin, For
                 "positionid": form.instance.position.positionid,
             },
         )
-        messages.success(self.request, _("Nummer geändert."))
+        messages.success(self.request, _("Number changed."))
         return redirect(reverse(
             "plugins:pretix_bagnumbers:overview",
             kwargs={

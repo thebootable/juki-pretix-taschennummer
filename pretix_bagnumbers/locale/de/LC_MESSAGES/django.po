@@ -1,0 +1,180 @@
+# German translations for pretix-bagnumbers
+# Copyright (C) 2024
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# apps.py
+msgid "Bag Numbers"
+msgstr "Taschennummern"
+
+msgid "Consecutive bag numbers with configurable number ranges per product. Numbers are unique per event, are released on cancellation, and are available in ticket printing and exports."
+msgstr "Fortlaufende Taschennummern mit konfigurierbaren Nummernkreisen pro Produkt. Nummern sind pro Event eindeutig, werden bei Stornierung freigegeben und stehen beim Ticketdruck und in Exporten zur Verfügung."
+
+# forms.py
+msgid "Bag Number"
+msgstr "Taschennummer"
+
+msgid "Number range"
+msgstr "Nummernkreis"
+
+msgid "Leave empty if this product should not receive a bag number. Manage number ranges under Settings → Bag Numbers."
+msgstr "Leer lassen, wenn dieses Produkt keine Taschennummer erhalten soll. Nummernkreise unter Einstellungen → Taschennummern verwalten."
+
+msgid "End must not be less than start."
+msgstr "Das Ende darf nicht kleiner als der Start sein."
+
+msgid "This number range overlaps with '%(name)s' (%(start)s–%(end)s)."
+msgstr "Dieser Nummernkreis überschneidet sich mit '%(name)s' (%(start)s–%(end)s)."
+
+msgid "Number %(n)s is already assigned (order %(o)s)."
+msgstr "Nummer %(n)s ist bereits vergeben (Bestellung %(o)s)."
+
+# signals.py
+msgid "Bag number"
+msgstr "Taschennummer"
+
+# views.py
+msgid "Number range saved."
+msgstr "Nummernkreis gespeichert."
+
+msgid "The number range '%(name)s' cannot be deleted while numbers from it are still assigned."
+msgstr "Der Nummernkreis '%(name)s' kann nicht gelöscht werden, solange Nummern daraus vergeben sind."
+
+msgid "Number range deleted."
+msgstr "Nummernkreis gelöscht."
+
+msgid "The number range could not be deleted because numbers from it were assigned in the meantime."
+msgstr "Der Nummernkreis konnte nicht gelöscht werden, da inzwischen Nummern daraus vergeben wurden."
+
+msgid "Number changed."
+msgstr "Nummer geändert."
+
+# logentrytypes.py
+msgid "Bag number {number} was assigned (position #{positionid})."
+msgstr "Taschennummer {number} wurde vergeben (Position #{positionid})."
+
+msgid "Bag number {number} was released (position #{positionid})."
+msgstr "Taschennummer {number} wurde freigegeben (Position #{positionid})."
+
+msgid "Bag number was manually changed from {old_number} to {number} (position #{positionid})."
+msgstr "Taschennummer wurde manuell von {old_number} auf {number} geändert (Position #{positionid})."
+
+# exporters.py
+msgctxt "export_category"
+msgid "1 Juki"
+msgstr "1 Juki"
+
+msgid "Participant Data"
+msgstr "Teilnehmerdaten"
+
+msgid "Excel export with one row per participant (order position with bag number). Contains order code, bag number, first and last name, all event questions, invoice address, e-mail, and phone number. Only paid and pending orders; sorted by bag number ascending. Choose between all number ranges on one sheet or one sheet per number range."
+msgstr "Excel-Export mit einer Zeile pro Teilnehmer (Bestellposition mit Taschennummer). Enthält Bestell-Nummer, Taschennummer, Vor- und Nachname, alle Event-Fragen, Rechnungsadresse, E-Mail und Telefonnummer. Nur bezahlte und ausstehende Bestellungen; sortiert nach Taschennummer. Wählbar: alle Nummernkreise auf einem Tabellenblatt oder pro Nummernkreis ein eigenes."
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Excel – All number ranges on one sheet"
+msgstr "Excel – Alle Nummernkreise auf einem Tabellenblatt"
+
+msgid "Excel – One sheet per number range"
+msgstr "Excel – Pro Nummernkreis ein eigenes Tabellenblatt"
+
+msgid "Products"
+msgstr "Produkte"
+
+msgid "If nothing is selected, all products are included."
+msgstr "Wenn nichts ausgewählt, werden alle Produkte berücksichtigt."
+
+msgid "Order Code"
+msgstr "Bestell-Nummer"
+
+msgid "First Name"
+msgstr "Vorname"
+
+msgid "Last Name"
+msgstr "Nachname"
+
+msgid "Invoice Address Name"
+msgstr "Name (Rechnungsadresse)"
+
+msgid "E-Mail"
+msgstr "E-Mail"
+
+msgid "Phone Number"
+msgstr "Telefonnummer"
+
+# templates/overview.html
+msgid "Number Ranges"
+msgstr "Nummernkreise"
+
+msgid "End"
+msgstr "Ende"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "%(count)s numbers assigned"
+msgstr "%(count)s Nummern vergeben"
+
+msgid "No number ranges created yet."
+msgstr "Noch keine Nummernkreise angelegt."
+
+msgid "Add number range"
+msgstr "Nummernkreis anlegen"
+
+msgid "Configured Products"
+msgstr "Konfigurierte Produkte"
+
+msgid "Product"
+msgstr "Produkt"
+
+msgid "Number Range"
+msgstr "Nummernkreis"
+
+msgid "from"
+msgstr "ab"
+
+msgid "No products assigned. Assign via the product detail page."
+msgstr "Kein Produkt zugeordnet. Die Zuordnung erfolgt auf der jeweiligen Produktseite."
+
+msgid "Assigned Numbers"
+msgstr "Vergebene Nummern"
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Number"
+msgstr "Nummer"
+
+msgid "Order"
+msgstr "Bestellung"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Change"
+msgstr "Ändern"
+
+# templates/range_form.html + number_form.html
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Change Bag Number"
+msgstr "Taschennummer ändern"
+
+# templates/order_info.html
+msgid "Pos."
+msgstr "Pos."
+
+msgid "Manage Bag Numbers"
+msgstr "Taschennummern verwalten"
+
+msgid "Start"
+msgstr "Start"

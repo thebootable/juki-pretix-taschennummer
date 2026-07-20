@@ -4,16 +4,15 @@ from django.utils.translation import gettext_lazy as _
 
 class PluginApp(AppConfig):
     name = "pretix_bagnumbers"
-    verbose_name = _("Taschennummern")
+    verbose_name = _("Bag Numbers")
 
     class PretixPluginMeta:
-        name = _("Taschennummern")
+        name = _("Bag Numbers")
         author = "Tobi"
         description = _(
-            "Fortlaufende Taschennummern mit konfigurierbaren Nummernkreisen "
-            "pro Produkt. Nummern sind eventweit eindeutig, werden bei "
-            "Stornierung wieder freigegeben und stehen auf Ticketdruck "
-            "und in Exporten zur Verfügung."
+            "Consecutive bag numbers with configurable number ranges per product. "
+            "Numbers are unique per event, are released on cancellation, and are "
+            "available in ticket printing and exports."
         )
         visible = True
         version = "0.1.0"
@@ -22,4 +21,4 @@ class PluginApp(AppConfig):
 
     def ready(self):
         from . import signals  # noqa
-        from . import logentrytypes  # noqa -- Registry-Einträge laden
+        from . import logentrytypes  # noqa

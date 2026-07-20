@@ -5,12 +5,7 @@ from .models import ItemNumberConfig, NumberRange, BagNumber
 
 
 class ItemNumberConfigForm(forms.ModelForm):
-    """
-    Wird über das item_forms-Signal auf der Produktseite eingeblendet.
-    'Kein Nummernkreis' = leere Auswahl -> Config wird gelöscht.
-    """
-    # Überschrift des Formular-Panels auf der Produktseite
-    title = _("Taschennummer")
+    title = _("Bag Number")
 
     class Meta:
         model = ItemNumberConfig
@@ -20,11 +15,10 @@ class ItemNumberConfigForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["number_range"].queryset = event.bagnumber_ranges.all()
         self.fields["number_range"].required = False
-        self.fields["number_range"].label = _("Nummernkreis")
+        self.fields["number_range"].label = _("Number range")
         self.fields["number_range"].help_text = _(
-            "Leer lassen, wenn dieses Produkt keine Taschennummer erhalten "
-            "soll. Nummernkreise verwaltest du unter Einstellungen → "
-            "Taschennummern."
+            "Leave empty if this product should not receive a bag number. "
+            "Manage number ranges under Settings → Bag Numbers."
         )
 
     def save(self, commit=True):
@@ -51,7 +45,7 @@ class NumberRangeForm(forms.ModelForm):
 
         if end is not None and start is not None and end < start:
             raise forms.ValidationError(
-                _("Ende darf nicht kleiner als Start sein.")
+                _("End must not be less than start.")
             )
 
         if start is not None and self._event is not None:
@@ -59,14 +53,11 @@ class NumberRangeForm(forms.ModelForm):
             if self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
             for rng in existing:
-                # Zwei Kreise [a, a_end] und [b, b_end] überlappen, wenn
-                # a <= b_end (oder b offen) UND b <= a_end (oder a offen).
                 overlaps = (rng.end is None or start <= rng.end) and \
                            (end is None or rng.start <= end)
                 if overlaps:
                     raise forms.ValidationError(
-                        _("Dieser Nummernkreis überschneidet sich mit "
-                          "'%(name)s' (%(start)s–%(end)s).")
+                        _("This number range overlaps with '%(name)s' (%(start)s–%(end)s).")
                         % {
                             "name": rng.name,
                             "start": rng.start,
@@ -77,7 +68,6 @@ class NumberRangeForm(forms.ModelForm):
 
 
 class BagNumberChangeForm(forms.ModelForm):
-    """Manuelle Änderung einer vergebenen Nummer im Backend."""
     class Meta:
         model = BagNumber
         fields = ["number"]
@@ -89,7 +79,7 @@ class BagNumberChangeForm(forms.ModelForm):
         ).exclude(pk=self.instance.pk)
         if clash.exists():
             raise forms.ValidationError(
-                _("Nummer %(n)s ist bereits vergeben (Bestellung %(o)s).")
+                _("Number %(n)s is already assigned (order %(o)s).")
                 % {"n": n, "o": clash.first().position.order.code}
             )
         return n
