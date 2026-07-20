@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from .models import ItemNumberConfig, NumberRange, BagNumber
+from .models import BagNumber, ItemNumberConfig, NumberRange
 
 
 def assign_number(position):
@@ -71,19 +71,3 @@ def release_number(position, log=True):
         )
 
 
-def change_number(bagnumber, new_number):
-    """
-    Manuelle Änderung im Backend. Der UniqueConstraint verhindert
-    Duplikate; hier zusätzlich eine sprechende Fehlermeldung.
-    """
-    clash = BagNumber.objects.filter(
-        event=bagnumber.event, number=new_number
-    ).exclude(pk=bagnumber.pk)
-    if clash.exists():
-        raise ValidationError(
-            f"Nummer {new_number} ist bereits vergeben "
-            f"(Bestellung {clash.first().position.order.code})."
-        )
-    bagnumber.number = new_number
-    bagnumber.save(update_fields=["number"])
-    return bagnumber

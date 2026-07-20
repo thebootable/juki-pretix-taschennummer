@@ -40,13 +40,39 @@ class NumberRangeForm(forms.ModelForm):
         model = NumberRange
         fields = ["name", "start", "end"]
 
+    def __init__(self, *args, event=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._event = event
+
     def clean(self):
         data = super().clean()
-        if data.get("end") is not None and data.get("start") is not None \
-                and data["end"] < data["start"]:
+        start = data.get("start")
+        end = data.get("end")
+
+        if end is not None and start is not None and end < start:
             raise forms.ValidationError(
                 _("Ende darf nicht kleiner als Start sein.")
             )
+
+        if start is not None and self._event is not None:
+            existing = NumberRange.objects.filter(event=self._event)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            for rng in existing:
+                # Zwei Kreise [a, a_end] und [b, b_end] überlappen, wenn
+                # a <= b_end (oder b offen) UND b <= a_end (oder a offen).
+                overlaps = (rng.end is None or start <= rng.end) and \
+                           (end is None or rng.start <= end)
+                if overlaps:
+                    raise forms.ValidationError(
+                        _("Dieser Nummernkreis überschneidet sich mit "
+                          "'%(name)s' (%(start)s–%(end)s).")
+                        % {
+                            "name": rng.name,
+                            "start": rng.start,
+                            "end": rng.end if rng.end is not None else "∞",
+                        }
+                    )
         return data
 
 

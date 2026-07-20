@@ -56,6 +56,7 @@ class RangeCreateUpdateView(EventSettingsViewMixin, EventPermissionRequiredMixin
             kwargs["instance"] = get_object_or_404(
                 NumberRange, pk=pk, event=self.request.event
             )
+        kwargs["event"] = self.request.event
         return kwargs
 
     def form_valid(self, form):
@@ -125,7 +126,7 @@ class NumberChangeView(EventSettingsViewMixin, EventPermissionRequiredMixin, For
         return kwargs
 
     def form_valid(self, form):
-        old_number = BagNumber.objects.get(pk=form.instance.pk).number
+        old_number = form.initial["number"]
         form.save()
         form.instance.position.order.log_action(
             "pretix_bagnumbers.number.changed",

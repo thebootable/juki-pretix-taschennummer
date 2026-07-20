@@ -1,10 +1,11 @@
-# pretix-bagnumbers (Grundgerüst)
+# pretix-bagnumbers
 
 Fortlaufende **Taschennummern** mit konfigurierbaren Nummernkreisen pro Produkt,
 damit die nummerierten Taschen vor Ort sauber vergeben werden können.
 
 ## Funktionsweise
 - **Nummernkreise** (Name, Start, optional Ende) werden pro Event angelegt.
+  Überlappende Kreise werden beim Speichern abgelehnt.
 - **Zuordnung am Produkt**: Über das `item_forms`-Signal erscheint auf jeder
   Produktseite ein Feld "Nummernkreis". Produkte ohne Zuordnung erhalten keine Nummer.
 - **Vergabe** bei `order_placed`: kleinste freie Nummer >= Start, race-condition-sicher
@@ -27,21 +28,44 @@ damit die nummerierten Taschen vor Ort sauber vergeben werden können.
 Signal-Namen sind gegen die pretix-Doku Stand 2026.7 geprüft
 (`layout_text_variables` und `order_reactivated` liegen in `pretix.base.signals`).
 
-## Vor dem ersten Start
+## Installation (Docker)
+
+Im Dockerfile der pretix-Instanz einfach hinzufügen:
+
+```dockerfile
+RUN pip3 install git+https://github.com/thebootable/juki-pretix-taschennummer.git
+```
+
+Die Datenbankmigrationen werden beim nächsten Start der Instanz automatisch
+angewendet (`python -m pretix migrate` läuft im pretix-Entrypoint).
+
+## Lokale Entwicklung
+
 ```bash
 pip install -e .
-python -m pretix makemigrations pretix_bagnumbers
+# pretix-Umgebung muss konfiguriert sein:
 python -m pretix migrate
+```
+
+## Tests
+
+```bash
+pip install pytest pytest-django
+pytest tests/
 ```
 
 ## Entschiedene Punkte
 - **API-Performance**: 1 Query pro Position im `orderposition_api_details`-Receiver
-  ist fuer die erwartete Eventgroesse akzeptabel -- bewusst so belassen.
-- **Logging**: Vergabe, Freigabe und manuelle Aenderung erzeugen LogEntries
-  (`pretix_bagnumbers.number.assigned/released/changed`) ueber die
+  ist für die erwartete Eventgröße akzeptabel -- bewusst so belassen.
+- **Logging**: Vergabe, Freigabe und manuelle Änderung erzeugen LogEntries
+  (`pretix_bagnumbers.number.assigned/released/changed`) über die
   `log_entry_types`-Registry und erscheinen in der Bestellhistorie.
-- **Loeschen von Nummernkreisen**: Loesch-Button erscheint nur bei leeren
+- **Löschen von Nummernkreisen**: Lösch-Button erscheint nur bei leeren
   Kreisen; serverseitiger Guard + PROTECT als doppeltes Netz.
 - **Testmodus**: `order_gracefully_delete` gibt Nummern sofort frei (ohne Log).
-- **Check-in**: Nummer wird ueber die Designer-Variable auf das Ticket
-  gedruckt; keine Anzeige in der Check-in-App noetig.
+- **Check-in**: Nummer wird über die Designer-Variable auf das Ticket
+  gedruckt; keine Anzeige in der Check-in-App nötig.
+- **Assign-Performance**: Die `used`-Menge für die Lückenauffüllung wird
+  event-weit in Python berechnet. Bei der erwarteten Eventgröße (hunderte
+  Nummern) ist das unkritisch; ein DB-seitiger Lückenalgorithmus wäre erst
+  bei zehntausenden Einträgen relevant.
