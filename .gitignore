@@ -51,6 +51,7 @@ media
 instance/
 var/
 pretix_env/
+data/
 
 # Virtual environments
 venv/
