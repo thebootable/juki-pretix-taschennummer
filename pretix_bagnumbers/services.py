@@ -6,13 +6,9 @@ from .models import BagNumber, ItemNumberConfig, NumberRange
 
 def assign_number(position):
     """
-    Vergibt die kleinste freie Nummer >= range.start für eine OrderPosition.
-    Gibt None zurück, wenn das Produkt keinen Nummernkreis hat oder die
-    Position bereits eine Nummer besitzt.
-
-    Race-Condition-Schutz: Der Nummernkreis wird per SELECT ... FOR UPDATE
-    gesperrt, damit zwei parallele Bestellungen nicht dieselbe Nummer ziehen.
-    Der UniqueConstraint ist das zweite Sicherheitsnetz.
+    Assigns the smallest free number >= range.start for an OrderPosition.
+    Returns None if the product has no number range or the position already
+    has a number. SELECT FOR UPDATE protects against race conditions.
     """
     try:
         config = position.item.bagnumber_config
@@ -28,8 +24,6 @@ def assign_number(position):
         rng = NumberRange.objects.select_for_update().get(
             pk=config.number_range_id
         )
-        # Eventweit belegte Nummern holen, nicht nur die des Kreises --
-        # falls ein offener Kreis in den nächsten hineingelaufen ist.
         used = set(
             BagNumber.objects
             .filter(event=event, number__gte=rng.start)
@@ -54,11 +48,7 @@ def assign_number(position):
 
 
 def release_number(position, log=True):
-    """
-    Nummer freigeben (z. B. bei Stornierung).
-    log=False beim Löschen von Testmodus-Bestellungen, da die Bestellung
-    samt Log ohnehin verschwindet.
-    """
+    """Releases a bag number (e.g. on cancellation)."""
     tn = BagNumber.objects.filter(position=position).first()
     if tn is None:
         return
@@ -71,3 +61,26 @@ def release_number(position, log=True):
         )
 
 
+def sync_number(position):
+    """
+    Ensures the position has the correct bag number for its current product.
+
+    - Product has no config → release any existing number.
+    - Product has a config, position has no number → assign one.
+    - Product has a config, position has a number from the WRONG range
+      (e.g. after a product change) → release old, assign new.
+    - Product has a config, position has a number from the correct range → no-op.
+    """
+    try:
+        expected_range = position.item.bagnumber_config.number_range
+    except ItemNumberConfig.DoesNotExist:
+        release_number(position)
+        return
+
+    existing = BagNumber.objects.filter(position=position).first()
+    if existing is None:
+        assign_number(position)
+    elif existing.number_range_id != expected_range.pk:
+        release_number(position)
+        assign_number(position)
+    # else: number is already in the correct range — no-op

@@ -211,3 +211,16 @@ msgstr "Abbrechen"
 # templates/overview.html – new button
 msgid "Assign missing numbers"
 msgstr "Fehlende Nummern vergeben"
+
+# overview.html – new feature strings
+msgid "<strong>%(count)s order positions</strong> should have a bag number but have none assigned yet. Use the \"Assign missing numbers\" button below for the affected product."
+msgstr "<strong>%(count)s Bestellpositionen</strong> sollten eine Taschennummer haben, aber es wurde noch keine vergeben. Verwende den Button „Fehlende Nummern vergeben" beim betroffenen Produkt."
+
+msgid "Status"
+msgstr "Status"
+
+msgid "No numbers assigned yet."
+msgstr "Noch keine Nummern vergeben."
+
+msgid "%(count)s gaps"
+msgstr "%(count)s Lücken"

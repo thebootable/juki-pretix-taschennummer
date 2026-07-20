@@ -23,17 +23,43 @@ class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         event = self.request.event
-        ctx["ranges"] = event.bagnumber_ranges.annotate(
-            numbers_count=Count("numbers")
-        ).prefetch_related("items__item")
+
+        # Fetch all assigned numbers in one query, grouped by range
+        numbers_by_range = {}
+        for row in BagNumber.objects.filter(event=event).values("number_range_id", "number"):
+            numbers_by_range.setdefault(row["number_range_id"], []).append(row["number"])
+
+        ranges = list(
+            event.bagnumber_ranges.annotate(numbers_count=Count("numbers"))
+        )
+        for rng in ranges:
+            assigned = sorted(numbers_by_range.get(rng.pk, []))
+            if assigned:
+                max_n = assigned[-1]
+                assigned_set = set(assigned)
+                rng.gaps = [n for n in range(rng.start, max_n) if n not in assigned_set]
+            else:
+                rng.gaps = []
+        ctx["ranges"] = ranges
+
         ctx["configs"] = ItemNumberConfig.objects.filter(
             item__event=event
         ).select_related("item", "number_range")
+
         ctx["numbers"] = BagNumber.objects.filter(
             event=event
         ).select_related(
             "position__order", "position__item", "number_range"
         )
+
+        ctx["unassigned_count"] = OrderPosition.objects.filter(
+            order__event=event,
+            order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+            canceled=False,
+            item__bagnumber_config__isnull=False,
+            bagnumber__isnull=True,
+        ).count()
+
         return ctx
 
 

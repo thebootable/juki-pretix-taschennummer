@@ -4,10 +4,17 @@
 {% block inside %}
   <h1>{% trans "Bag Numbers" %}</h1>
 
+  {% if unassigned_count %}
+    <div class="alert alert-warning">
+      <span class="fa fa-exclamation-triangle"></span>
+      {% blocktrans with count=unassigned_count %}<strong>{{ count }} order positions</strong> should have a bag number but have none assigned yet. Use the "Assign missing numbers" button below for the affected product.{% endblocktrans %}
+    </div>
+  {% endif %}
+
   <h2>{% trans "Number Ranges" %}</h2>
   <table class="table">
     <thead>
-      <tr><th>{% trans "Name" %}</th><th>{% trans "Start" %}</th><th>{% trans "End" %}</th><th></th></tr>
+      <tr><th>{% trans "Name" %}</th><th>{% trans "Start" %}</th><th>{% trans "End" %}</th><th>{% trans "Status" %}</th><th></th></tr>
     </thead>
     <tbody>
       {% for r in ranges %}
@@ -15,6 +22,24 @@
           <td>{{ r.name }}</td>
           <td>{{ r.start }}</td>
           <td>{{ r.end|default:"–" }}</td>
+          <td>
+            {% if r.numbers_count == 0 %}
+              <span class="text-muted small">{% trans "No numbers assigned yet." %}</span>
+            {% else %}
+              <span class="text-muted small">
+                {% blocktrans with count=r.numbers_count %}{{ count }} numbers assigned{% endblocktrans %}
+              </span>
+              {% if r.gaps %}
+                <br>
+                <span class="text-warning small">
+                  {% blocktrans with count=r.gaps|length %}{{ count }} gaps{% endblocktrans %}
+                  {% if r.gaps|length <= 10 %}
+                    ({{ r.gaps|join:", " }})
+                  {% endif %}
+                </span>
+              {% endif %}
+            {% endif %}
+          </td>
           <td>
             <a href="{% url 'plugins:pretix_bagnumbers:range.edit' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}"
                class="btn btn-default btn-sm">{% trans "Edit" %}</a>
@@ -27,14 +52,11 @@
             {% else %}
               <a href="{% url 'plugins:pretix_bagnumbers:range.delete.confirm' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}"
                  class="btn btn-danger btn-sm">{% trans "Delete" %}</a>
-              <span class="text-muted small">
-                {% blocktrans with count=r.numbers_count %}{{ count }} numbers assigned{% endblocktrans %}
-              </span>
             {% endif %}
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="4"><em>{% trans "No number ranges created yet." %}</em></td></tr>
+        <tr><td colspan="5"><em>{% trans "No number ranges created yet." %}</em></td></tr>
       {% endfor %}
     </tbody>
   </table>

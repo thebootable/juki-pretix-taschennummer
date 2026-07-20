@@ -3,42 +3,15 @@ import tempfile
 from collections import OrderedDict
 
 from django import forms
+from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
-from pretix.base.exporter import BaseExporter, ListExporter
+from pretix.base.exporter import BaseExporter
 from pretix.base.models import Order, OrderPosition, Question
 from pretix.helpers.safe_openpyxl import SafeWorkbook
 
-from .models import BagNumber, NumberRange
+from .models import NumberRange
 
-
-class BagNumberExporter(ListExporter):
-    identifier = "bagnumbers"
-    verbose_name = _("Bag Numbers")
-
-    def get_filename(self):
-        return "bagnumbers"
-
-    def iterate_list(self, form_data):
-        yield [
-            str(_("Bag Number")), str(_("Number Range")), str(_("Order Code")),
-            str(_("Product")), str(_("Name")), str(_("Status")),
-        ]
-        qs = BagNumber.objects.filter(
-            event=self.event
-        ).select_related(
-            "position__order", "position__item", "number_range"
-        ).order_by("number")
-        for tn in qs:
-            pos = tn.position
-            yield [
-                tn.number,
-                tn.number_range.name,
-                pos.order.code,
-                str(pos.item),
-                pos.attendee_name or "",
-                pos.order.get_status_display(),
-            ]
 
 
 class TeilnehmerdatenExporter(BaseExporter):
@@ -99,11 +72,13 @@ class TeilnehmerdatenExporter(BaseExporter):
         return headers
 
     def _get_positions_qs(self, form_data):
+        # Include all positions whose product has a configured range,
+        # even if no number has been assigned yet (shown with empty field).
         qs = OrderPosition.objects.filter(
             order__event=self.event,
             order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
             canceled=False,
-            bagnumber__isnull=False,
+            item__bagnumber_config__isnull=False,
         )
         if form_data.get('items'):
             qs = qs.filter(item__in=form_data['items'])
@@ -111,11 +86,14 @@ class TeilnehmerdatenExporter(BaseExporter):
             'order', 'item', 'bagnumber', 'bagnumber__number_range',
         ).prefetch_related(
             'answers', 'answers__question', 'answers__options',
-        ).order_by('bagnumber__number')
+        ).order_by(F('bagnumber__number').asc(nulls_last=True))
 
     def _build_row(self, pos, questions):
         order = pos.order
-        bn = pos.bagnumber
+        try:
+            bn = pos.bagnumber
+        except Exception:
+            bn = None
 
         name_parts = pos.attendee_name_parts or {}
         given_name = name_parts.get('given_name', '')
@@ -128,7 +106,7 @@ class TeilnehmerdatenExporter(BaseExporter):
 
         row = [
             order.code,
-            bn.number,
+            bn.number if bn else '',
             given_name,
             family_name,
         ]
@@ -169,7 +147,11 @@ class TeilnehmerdatenExporter(BaseExporter):
             ranges = NumberRange.objects.filter(event=self.event).order_by('start')
             for rng in ranges:
                 ws = wb.create_sheet(str(rng.name)[:30])
-                qs = self._get_positions_qs(form_data).filter(bagnumber__number_range=rng)
+                # Positions with a number in this range OR configured for this range but not yet assigned
+                qs = self._get_positions_qs(form_data).filter(
+                    Q(bagnumber__number_range=rng) |
+                    Q(bagnumber__isnull=True, item__bagnumber_config__number_range=rng)
+                )
                 self._fill_sheet(ws, qs, questions)
         else:
             ws = wb.create_sheet(str(_("Participant Data"))[:30])

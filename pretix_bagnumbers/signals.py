@@ -19,7 +19,7 @@ from pretix.control.signals import item_forms, nav_event_settings, order_info
 
 from .forms import ItemNumberConfigForm
 from .models import ItemNumberConfig, BagNumber
-from .services import assign_number, release_number
+from .services import assign_number, release_number, sync_number
 
 DUID = "pretix_bagnumbers"
 
@@ -59,12 +59,11 @@ def on_order_split(sender, original, split_order, **kwargs):
 
 @receiver(order_changed, dispatch_uid=f"{DUID}_order_changed")
 def on_order_changed(sender, order, **kwargs):
-    # Deckt Teilstornos und nachträglich hinzugefügte Positionen ab.
     for pos in order.all_positions.all():
         if pos.canceled:
             release_number(pos)
         else:
-            assign_number(pos)  # no-op, wenn schon vorhanden / kein Kreis
+            sync_number(pos)
 
 
 @receiver(order_gracefully_delete, dispatch_uid=f"{DUID}_order_delete")
