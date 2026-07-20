@@ -224,3 +224,10 @@ msgstr "Noch keine Nummern vergeben."
 
 msgid "%(count)s gaps"
 msgstr "%(count)s Lücken"
+
+# forms.py – range reassignment
+msgid "Reassign bag numbers to new range"
+msgstr "Taschennummern dem neuen Nummernkreis zuweisen"
+
+msgid "Only relevant when you change the number range above. Checked: all paid and pending orders for this product will have their current bag numbers released and new numbers assigned from the newly selected range. Unchecked: existing orders keep their current numbers; only new orders will receive numbers from the new range."
+msgstr "Nur relevant, wenn du den Nummernkreis oben änderst. Aktiviert: Alle bezahlten und ausstehenden Bestellungen dieses Produkts erhalten ihre aktuellen Taschennummern entzogen und bekommen neue Nummern aus dem neu gewählten Kreis zugewiesen. Deaktiviert: Bestehende Bestellungen behalten ihre aktuellen Nummern; nur neue Bestellungen erhalten Nummern aus dem neuen Kreis."

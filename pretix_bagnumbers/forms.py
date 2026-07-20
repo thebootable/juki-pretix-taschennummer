@@ -1,7 +1,10 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from pretix.base.models import Order, OrderPosition
+
 from .models import ItemNumberConfig, NumberRange, BagNumber
+from .services import sync_number
 
 
 class ItemNumberConfigForm(forms.ModelForm):
@@ -13,6 +16,9 @@ class ItemNumberConfigForm(forms.ModelForm):
 
     def __init__(self, *args, event=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self._event = event
+        self._original_range_id = self.instance.number_range_id if self.instance.pk else None
+
         self.fields["number_range"].queryset = event.bagnumber_ranges.all()
         self.fields["number_range"].required = False
         self.fields["number_range"].label = _("Number range")
@@ -21,12 +27,47 @@ class ItemNumberConfigForm(forms.ModelForm):
             "Manage number ranges under Settings → Bag Numbers."
         )
 
+        # Only offer reassignment when an existing range is already configured.
+        if self.instance.pk and self._original_range_id:
+            self.fields["reassign_existing"] = forms.BooleanField(
+                label=_("Reassign bag numbers to new range"),
+                required=False,
+                help_text=_(
+                    "Only relevant when you change the number range above. "
+                    "Checked: all paid and pending orders for this product will have their "
+                    "current bag numbers released and new numbers assigned from the newly "
+                    "selected range. "
+                    "Unchecked: existing orders keep their current numbers; only new orders "
+                    "will receive numbers from the new range."
+                ),
+            )
+
     def save(self, commit=True):
         if self.cleaned_data.get("number_range") is None:
             if self.instance.pk:
                 self.instance.delete()
             return None
-        return super().save(commit=commit)
+
+        new_range = self.cleaned_data.get("number_range")
+        range_changed = (
+            self._original_range_id is not None
+            and new_range is not None
+            and new_range.pk != self._original_range_id
+        )
+
+        result = super().save(commit=commit)
+
+        if commit and self.cleaned_data.get("reassign_existing") and range_changed:
+            positions = OrderPosition.objects.filter(
+                order__event=self._event,
+                order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+                item=self.instance.item,
+                canceled=False,
+            )
+            for pos in positions:
+                sync_number(pos)
+
+        return result
 
 
 class NumberRangeForm(forms.ModelForm):
