@@ -40,7 +40,7 @@ hypothesis/
 htmlcov/
 
 # Translations
-*.mo
+# .mo files are intentionally committed so pip install git+... works without a build step
 
 # Django stuff (common)
 local_settings.py
