@@ -1,0 +1,11 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n bootstrap3 %}
+{% block title %}{% trans "Taschennummer ändern" %}{% endblock %}
+{% block inside %}
+  <h1>{% trans "Taschennummer ändern" %}</h1>
+  <form method="post">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <button type="submit" class="btn btn-primary">{% trans "Speichern" %}</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,69 @@
+from django import forms
+from django.utils.translation import gettext_lazy as _
+
+from .models import ItemNumberConfig, NumberRange, BagNumber
+
+
+class ItemNumberConfigForm(forms.ModelForm):
+    """
+    Wird über das item_forms-Signal auf der Produktseite eingeblendet.
+    'Kein Nummernkreis' = leere Auswahl -> Config wird gelöscht.
+    """
+    # Überschrift des Formular-Panels auf der Produktseite
+    title = _("Taschennummer")
+
+    class Meta:
+        model = ItemNumberConfig
+        fields = ["number_range"]
+
+    def __init__(self, *args, event=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["number_range"].queryset = event.bagnumber_ranges.all()
+        self.fields["number_range"].required = False
+        self.fields["number_range"].label = _("Nummernkreis")
+        self.fields["number_range"].help_text = _(
+            "Leer lassen, wenn dieses Produkt keine Taschennummer erhalten "
+            "soll. Nummernkreise verwaltest du unter Einstellungen → "
+            "Taschennummern."
+        )
+
+    def save(self, commit=True):
+        if self.cleaned_data.get("number_range") is None:
+            if self.instance.pk:
+                self.instance.delete()
+            return None
+        return super().save(commit=commit)
+
+
+class NumberRangeForm(forms.ModelForm):
+    class Meta:
+        model = NumberRange
+        fields = ["name", "start", "end"]
+
+    def clean(self):
+        data = super().clean()
+        if data.get("end") is not None and data.get("start") is not None \
+                and data["end"] < data["start"]:
+            raise forms.ValidationError(
+                _("Ende darf nicht kleiner als Start sein.")
+            )
+        return data
+
+
+class BagNumberChangeForm(forms.ModelForm):
+    """Manuelle Änderung einer vergebenen Nummer im Backend."""
+    class Meta:
+        model = BagNumber
+        fields = ["number"]
+
+    def clean_number(self):
+        n = self.cleaned_data["number"]
+        clash = BagNumber.objects.filter(
+            event=self.instance.event, number=n,
+        ).exclude(pk=self.instance.pk)
+        if clash.exists():
+            raise forms.ValidationError(
+                _("Nummer %(n)s ist bereits vergeben (Bestellung %(o)s).")
+                % {"n": n, "o": clash.first().position.order.code}
+            )
+        return n

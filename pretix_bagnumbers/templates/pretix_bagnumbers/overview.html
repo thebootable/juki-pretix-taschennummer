@@ -1,0 +1,93 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Taschennummern" %}{% endblock %}
+{% block inside %}
+  <h1>{% trans "Taschennummern" %}</h1>
+
+  <h2>{% trans "Nummernkreise" %}</h2>
+  <table class="table">
+    <thead>
+      <tr><th>{% trans "Name" %}</th><th>{% trans "Start" %}</th><th>{% trans "Ende" %}</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for r in ranges %}
+        <tr>
+          <td>{{ r.name }}</td>
+          <td>{{ r.start }}</td>
+          <td>{{ r.end|default:"–" }}</td>
+          <td>
+            <a href="{% url 'plugins:pretix_bagnumbers:range.edit' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}"
+               class="btn btn-default btn-sm">{% trans "Bearbeiten" %}</a>
+            {% if r.numbers_count == 0 %}
+              <form method="post" style="display: inline"
+                    action="{% url 'plugins:pretix_bagnumbers:range.delete' organizer=request.organizer.slug event=request.event.slug pk=r.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">
+                  {% trans "Löschen" %}
+                </button>
+              </form>
+            {% else %}
+              <span class="text-muted small">
+                {% blocktrans with count=r.numbers_count %}{{ count }} Nummern vergeben{% endblocktrans %}
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4"><em>{% trans "Noch keine Nummernkreise angelegt." %}</em></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'plugins:pretix_bagnumbers:range.add' organizer=request.organizer.slug event=request.event.slug %}"
+     class="btn btn-primary">{% trans "Nummernkreis anlegen" %}</a>
+
+  <h2>{% trans "Konfigurierte Produkte" %}</h2>
+  <table class="table">
+    <thead>
+      <tr><th>{% trans "Produkt" %}</th><th>{% trans "Nummernkreis" %}</th></tr>
+    </thead>
+    <tbody>
+      {% for c in configs %}
+        <tr>
+          <td>
+            {# Sprunglink zurück zur Produktseite #}
+            <a href="{% url 'control:event.item' organizer=request.organizer.slug event=request.event.slug item=c.item.pk %}">
+              {{ c.item }}
+            </a>
+          </td>
+          <td>{{ c.number_range.name }} (ab {{ c.number_range.start }})</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2"><em>{% trans "Kein Produkt zugeordnet. Die Zuordnung erfolgt auf der jeweiligen Produktseite." %}</em></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>{% trans "Vergebene Nummern" %}</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>{% trans "Nummer" %}</th><th>{% trans "Bestellung" %}</th>
+        <th>{% trans "Produkt" %}</th><th>{% trans "Name" %}</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in numbers %}
+        <tr>
+          <td><strong>{{ n.number }}</strong></td>
+          <td>
+            <a href="{% url 'control:event.order' organizer=request.organizer.slug event=request.event.slug code=n.position.order.code %}">
+              {{ n.position.order.code }}
+            </a>
+          </td>
+          <td>{{ n.position.item }}</td>
+          <td>{{ n.position.attendee_name|default:"–" }}</td>
+          <td>
+            <a href="{% url 'plugins:pretix_bagnumbers:number.edit' organizer=request.organizer.slug event=request.event.slug pk=n.pk %}"
+               class="btn btn-default btn-sm">{% trans "Ändern" %}</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

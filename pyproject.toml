@@ -1,0 +1,12 @@
+[project]
+name = "pretix-bagnumbers"
+version = "0.1.0"
+description = "Fortlaufende Taschennummern mit Nummernkreisen pro Produkt"
+dependencies = []
+
+[project.entry-points."pretix.plugin"]
+pretix_bagnumbers = "pretix_bagnumbers:PretixPluginMeta"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
