@@ -15,7 +15,7 @@ from pretix.base.signals import (
     order_split,
     register_data_exporters,
 )
-from pretix.control.signals import item_forms, nav_event_settings, order_info
+from pretix.control.signals import item_forms, nav_event, order_info
 
 from .forms import ItemNumberConfigForm
 from .models import ItemNumberConfig, BagNumber
@@ -94,11 +94,12 @@ def add_item_form(sender, request, item, **kwargs):
 
 # ------------------------------------------------------- Navigation
 
-@receiver(nav_event_settings, dispatch_uid=f"{DUID}_nav")
+@receiver(nav_event, dispatch_uid=f"{DUID}_nav")
 def add_nav_entry(sender, request, **kwargs):
     url = resolve(request.path_info)
     return [{
         "label": _("Bag Numbers"),
+        "icon": "list-ol",
         "url": reverse(
             "plugins:pretix_bagnumbers:overview",
             kwargs={

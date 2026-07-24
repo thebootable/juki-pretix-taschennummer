@@ -9,14 +9,13 @@ from django.views.generic import FormView, TemplateView
 
 from pretix.base.models import Item, Order, OrderPosition
 from pretix.control.permissions import EventPermissionRequiredMixin
-from pretix.control.views.event import EventSettingsViewMixin
 
 from .forms import NumberRangeForm, BagNumberChangeForm
 from .models import ItemNumberConfig, NumberRange, BagNumber
 from .services import assign_number, release_number
 
 
-class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, TemplateView):
+class OverviewView(EventPermissionRequiredMixin, TemplateView):
     template_name = "pretix_bagnumbers/overview.html"
     permission = "can_change_event_settings"
 
@@ -63,7 +62,7 @@ class OverviewView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
         return ctx
 
 
-class RangeCreateUpdateView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):
+class RangeCreateUpdateView(EventPermissionRequiredMixin, FormView):
     template_name = "pretix_bagnumbers/range_form.html"
     permission = "can_change_event_settings"
     form_class = NumberRangeForm
@@ -180,7 +179,7 @@ class BulkAssignView(EventPermissionRequiredMixin, View):
         return redirect(overview_url)
 
 
-class NumberChangeView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormView):
+class NumberChangeView(EventPermissionRequiredMixin, FormView):
     template_name = "pretix_bagnumbers/number_form.html"
     permission = "can_change_orders"
     form_class = BagNumberChangeForm

@@ -19,9 +19,10 @@ damit die nummerierten Taschen vor Ort sauber vergeben werden können.
   (kleinste freie), kein Restore der alten -- die kann inzwischen belegt sein.
 - **Bestell-Split** (`order_split`): neue Positionen im abgespaltenen Auftrag
   erhalten neue Nummern.
-- **Backend**: Untermenü "Taschennummern" unter Einstellungen mit Übersicht über
-  Nummernkreise, konfigurierte Produkte (mit Sprunglink zur Produktseite) und
-  vergebene Nummern inkl. manueller Änderung (mit Duplikatsprüfung).
+- **Backend**: eigener Hauptpunkt "Taschennummern" in der Event-Seitenleiste
+  mit Übersicht über Nummernkreise, konfigurierte
+  Produkte (mit Sprunglink zur Produktseite) und vergebene Nummern inkl.
+  manueller Änderung (mit Duplikatsprüfung).
 - **Ticketdruck**: Variable `bagnumber` ("Taschennummer") im PDF-Ticket-Designer.
 - **Export**: eigener Exporter "Taschennummern" (ListExporter).
 - **REST-API**: Nummer erscheint als `bag_number` im `plugin_details`-Feld der
